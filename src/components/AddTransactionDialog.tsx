@@ -10,6 +10,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Upload, Loader2 } from "lucide-react";
 
+interface Goal {
+  id: string;
+  title: string;
+  target_amount: number;
+  current_amount: number;
+}
+
 interface AddTransactionDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -24,6 +31,8 @@ const AddTransactionDialog = ({ open, onOpenChange, userId, onSuccess }: AddTran
   const [categoryId, setCategoryId] = useState("");
   const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
   const [categories, setCategories] = useState<any[]>([]);
+  const [goals, setGoals] = useState<Goal[]>([]);
+  const [selectedGoalId, setSelectedGoalId] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
   const { toast } = useToast();
@@ -47,12 +56,18 @@ const AddTransactionDialog = ({ open, onOpenChange, userId, onSuccess }: AddTran
         if (data.success) {
           const extracted = data.data;
           setAmount(extracted.amount?.toString() || "");
-          setDescription(extracted.description || extracted.merchant || "");
+          const desc = extracted.description || extracted.merchant || "";
+          setDescription(desc);
           setDate(extracted.date || date);
+          
+          // Smart category suggestion
+          if (desc) {
+            suggestCategory(desc);
+          }
           
           toast({
             title: "Receipt Analyzed!",
-            description: "Details extracted successfully. Please review and confirm.",
+            description: "Details extracted successfully. Category auto-suggested.",
           });
         }
       };
@@ -70,6 +85,9 @@ const AddTransactionDialog = ({ open, onOpenChange, userId, onSuccess }: AddTran
 
   useEffect(() => {
     fetchCategories();
+    if (type === "income") {
+      fetchGoals();
+    }
   }, [type]);
 
   const fetchCategories = async () => {
@@ -82,6 +100,40 @@ const AddTransactionDialog = ({ open, onOpenChange, userId, onSuccess }: AddTran
       setCategories(data);
       if (data.length > 0) {
         setCategoryId(data[0].id);
+      }
+    }
+  };
+
+  const fetchGoals = async () => {
+    const { data, error } = await supabase
+      .from("goals")
+      .select("id, title, target_amount, current_amount")
+      .eq("user_id", userId)
+      .eq("status", "active");
+
+    if (!error && data) {
+      setGoals(data);
+    }
+  };
+
+  const suggestCategory = (desc: string) => {
+    const lowerDesc = desc.toLowerCase();
+    const categoryKeywords: { [key: string]: string[] } = {
+      'Food & Dining': ['restaurant', 'cafe', 'food', 'zomato', 'swiggy', 'dinner', 'lunch'],
+      'Shopping': ['amazon', 'flipkart', 'store', 'mall', 'shop'],
+      'Transportation': ['uber', 'ola', 'petrol', 'fuel', 'metro', 'bus'],
+      'Entertainment': ['movie', 'cinema', 'netflix', 'spotify', 'game'],
+      'Healthcare': ['hospital', 'pharmacy', 'doctor', 'medical', 'clinic'],
+      'Utilities': ['electricity', 'water', 'gas', 'internet', 'phone'],
+    };
+
+    for (const [categoryName, keywords] of Object.entries(categoryKeywords)) {
+      if (keywords.some(kw => lowerDesc.includes(kw))) {
+        const matchingCategory = categories.find(c => c.name === categoryName);
+        if (matchingCategory) {
+          setCategoryId(matchingCategory.id);
+          return;
+        }
       }
     }
   };
@@ -102,14 +154,27 @@ const AddTransactionDialog = ({ open, onOpenChange, userId, onSuccess }: AddTran
 
       if (error) throw error;
 
+      // Update goal if income is linked to a goal
+      if (type === "income" && selectedGoalId) {
+        const selectedGoal = goals.find(g => g.id === selectedGoalId);
+        if (selectedGoal) {
+          const newAmount = selectedGoal.current_amount + parseFloat(amount);
+          await supabase
+            .from("goals")
+            .update({ current_amount: newAmount })
+            .eq("id", selectedGoalId);
+        }
+      }
+
       toast({
         title: "Success!",
-        description: `${type === "income" ? "Income" : "Expense"} added successfully.`,
+        description: `${type === "income" ? "Income" : "Expense"} added successfully.${selectedGoalId ? " Goal updated!" : ""}`,
       });
 
       // Reset form
       setAmount("");
       setDescription("");
+      setSelectedGoalId("");
       setDate(new Date().toISOString().split("T")[0]);
       onSuccess();
       onOpenChange(false);
@@ -209,11 +274,36 @@ const AddTransactionDialog = ({ open, onOpenChange, userId, onSuccess }: AddTran
               id="description"
               placeholder="Add a note..."
               value={description}
-              onChange={(e) => setDescription(e.target.value)}
+              onChange={(e) => {
+                setDescription(e.target.value);
+                // Auto-suggest category when typing
+                if (e.target.value.length > 3 && type === "expense") {
+                  suggestCategory(e.target.value);
+                }
+              }}
               className="rounded-xl resize-none"
               rows={3}
             />
           </div>
+
+          {type === "income" && goals.length > 0 && (
+            <div className="space-y-2">
+              <Label htmlFor="goal">Link to Goal (Optional)</Label>
+              <Select value={selectedGoalId} onValueChange={setSelectedGoalId}>
+                <SelectTrigger className="rounded-xl">
+                  <SelectValue placeholder="Select a goal to contribute to" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">None</SelectItem>
+                  {goals.map((goal) => (
+                    <SelectItem key={goal.id} value={goal.id}>
+                      🎯 {goal.title} (₹{goal.current_amount.toLocaleString()}/₹{goal.target_amount.toLocaleString()})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
 
           <Button
             type="submit"

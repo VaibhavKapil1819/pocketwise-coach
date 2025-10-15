@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
-import { ArrowLeft, Plus, Target, Trash2 } from "lucide-react";
+import { ArrowLeft, Plus, Target, Trash2, TrendingUp, Wallet } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 interface Goal {
@@ -213,13 +213,30 @@ const Goals = () => {
                       </Button>
                     </div>
                   </CardHeader>
-                  <CardContent>
-                    <div className="space-y-2">
-                      <div className="flex justify-between text-sm">
-                        <span>₹{goal.current_amount.toLocaleString()}</span>
-                        <span className="text-muted-foreground">{progress.toFixed(0)}%</span>
+                   <CardContent>
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between text-sm">
+                        <div className="flex items-center gap-2">
+                          <Wallet className="h-4 w-4 text-primary" />
+                          <span className="font-semibold">₹{goal.current_amount.toLocaleString()}</span>
+                          <span className="text-muted-foreground">/ ₹{goal.target_amount.toLocaleString()}</span>
+                        </div>
+                        <span className="text-primary font-semibold">{progress.toFixed(0)}%</span>
                       </div>
                       <Progress value={progress} className="h-2" />
+                      
+                      {progress < 100 && (
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <TrendingUp className="h-3 w-3" />
+                          <span>₹{(goal.target_amount - goal.current_amount).toLocaleString()} remaining</span>
+                        </div>
+                      )}
+                      
+                      {progress >= 100 && (
+                        <div className="text-xs text-success font-semibold flex items-center gap-1">
+                          🎉 Goal achieved!
+                        </div>
+                      )}
                     </div>
                   </CardContent>
                 </Card>
