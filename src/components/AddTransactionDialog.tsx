@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { Upload, Loader2 } from "lucide-react";
 
 interface AddTransactionDialogProps {
   open: boolean;
@@ -24,7 +25,48 @@ const AddTransactionDialog = ({ open, onOpenChange, userId, onSuccess }: AddTran
   const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
   const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const [analyzing, setAnalyzing] = useState(false);
   const { toast } = useToast();
+
+  const handleReceiptUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setAnalyzing(true);
+    try {
+      const reader = new FileReader();
+      reader.onload = async (event) => {
+        const base64 = event.target?.result?.toString().split(',')[1];
+        
+        const { data, error } = await supabase.functions.invoke('analyze-receipt', {
+          body: { imageBase64: base64 }
+        });
+
+        if (error) throw error;
+
+        if (data.success) {
+          const extracted = data.data;
+          setAmount(extracted.amount?.toString() || "");
+          setDescription(extracted.description || extracted.merchant || "");
+          setDate(extracted.date || date);
+          
+          toast({
+            title: "Receipt Analyzed!",
+            description: "Details extracted successfully. Please review and confirm.",
+          });
+        }
+      };
+      reader.readAsDataURL(file);
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: "Failed to analyze receipt",
+        variant: "destructive",
+      });
+    } finally {
+      setAnalyzing(false);
+    }
+  };
 
   useEffect(() => {
     fetchCategories();
@@ -100,6 +142,24 @@ const AddTransactionDialog = ({ open, onOpenChange, userId, onSuccess }: AddTran
               </TabsTrigger>
             </TabsList>
           </Tabs>
+
+          <div className="space-y-2">
+            <Label>Upload Receipt (Optional)</Label>
+            <div className="relative">
+              <Input
+                type="file"
+                accept="image/*"
+                onChange={handleReceiptUpload}
+                disabled={analyzing}
+                className="rounded-xl"
+              />
+              {analyzing && (
+                <div className="absolute inset-0 flex items-center justify-center bg-background/80 rounded-xl">
+                  <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                </div>
+              )}
+            </div>
+          </div>
 
           <div className="space-y-2">
             <Label htmlFor="amount">Amount (₹)</Label>

@@ -1,1 +1,13 @@
 project_id = "mseiqvspbxrrvrgiamdb"
+
+[functions.analyze-receipt]
+verify_jwt = true
+
+[functions.generate-insights]
+verify_jwt = true
+
+[functions.chat]
+verify_jwt = true
+
+[functions.financial-coach]
+verify_jwt = true

@@ -3,10 +3,11 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
-import { Plus, TrendingUp, TrendingDown, LogOut, Wallet } from "lucide-react";
+import { Plus, TrendingUp, TrendingDown, LogOut, Wallet, BarChart3, Target, GraduationCap } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import AddTransactionDialog from "@/components/AddTransactionDialog";
 import TransactionsList from "@/components/TransactionsList";
+import Chatbot from "@/components/Chatbot";
 import { Session } from "@supabase/supabase-js";
 
 const Dashboard = () => {
@@ -165,14 +166,23 @@ const Dashboard = () => {
           </Card>
         </div>
 
-        {/* Add Transaction Button */}
-        <div className="mb-6">
-          <Button
-            onClick={() => setShowAddDialog(true)}
-            className="w-full gradient-primary text-white hover:opacity-90 transition-opacity rounded-2xl py-6"
-          >
+        {/* Quick Actions */}
+        <div className="grid grid-cols-2 gap-3 mb-6">
+          <Button onClick={() => setShowAddDialog(true)} className="gradient-primary rounded-2xl py-6">
             <Plus className="mr-2 h-5 w-5" />
             Add Transaction
+          </Button>
+          <Button onClick={() => navigate("/analytics")} variant="outline" className="rounded-2xl py-6">
+            <BarChart3 className="mr-2 h-5 w-5" />
+            Analytics
+          </Button>
+          <Button onClick={() => navigate("/goals")} variant="outline" className="rounded-2xl py-6">
+            <Target className="mr-2 h-5 w-5" />
+            Goals
+          </Button>
+          <Button onClick={() => navigate("/coach")} variant="outline" className="rounded-2xl py-6">
+            <GraduationCap className="mr-2 h-5 w-5" />
+            Learn
           </Button>
         </div>
 
@@ -186,6 +196,9 @@ const Dashboard = () => {
           userId={session?.user?.id || ""}
           onSuccess={fetchStats}
         />
+
+        {/* Chatbot */}
+        <Chatbot />
       </div>
     </div>
   );
