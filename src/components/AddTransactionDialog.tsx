@@ -155,7 +155,7 @@ const AddTransactionDialog = ({ open, onOpenChange, userId, onSuccess }: AddTran
       if (error) throw error;
 
       // Update goal if income is linked to a goal
-      if (type === "income" && selectedGoalId) {
+      if (type === "income" && selectedGoalId && selectedGoalId !== "none") {
         const selectedGoal = goals.find(g => g.id === selectedGoalId);
         if (selectedGoal) {
           const newAmount = selectedGoal.current_amount + parseFloat(amount);
@@ -294,7 +294,7 @@ const AddTransactionDialog = ({ open, onOpenChange, userId, onSuccess }: AddTran
                   <SelectValue placeholder="Select a goal to contribute to" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">None</SelectItem>
+                  <SelectItem value="none">None</SelectItem>
                   {goals.map((goal) => (
                     <SelectItem key={goal.id} value={goal.id}>
                       🎯 {goal.title} (₹{goal.current_amount.toLocaleString()}/₹{goal.target_amount.toLocaleString()})
