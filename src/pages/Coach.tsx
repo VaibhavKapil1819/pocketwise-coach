@@ -62,7 +62,10 @@ const Coach = () => {
     setLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke('financial-coach', {
-        body: { topic: topic || selectedTopic, question: topic ? null : question }
+        body: { 
+          topic: topic || selectedTopic, 
+          question: topic ? null : question 
+        }
       });
 
       if (error) throw error;
@@ -71,15 +74,16 @@ const Coach = () => {
       
       toast({
         title: "🎉 XP Earned!",
-        description: `You gained ${data.xpGained} XP!`,
+        description: `You gained ${data.xpGained} XP! Keep learning.`,
       });
 
       fetchProfile();
       setQuestion("");
     } catch (error: any) {
+      console.error("Error in coach:", error);
       toast({
         title: "Error",
-        description: error.message,
+        description: error.message || "Failed to get response",
         variant: "destructive",
       });
     } finally {

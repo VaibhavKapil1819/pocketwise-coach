@@ -31,13 +31,37 @@ serve(async (req) => {
 
     const { message } = await req.json();
 
-    // Fetch recent transactions for context
+    // Fetch user data for context
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', user.id)
+      .single();
+
     const { data: transactions } = await supabase
       .from('transactions')
-      .select('*')
+      .select(`*, categories(name, icon)`)
       .eq('user_id', user.id)
       .order('date', { ascending: false })
-      .limit(20);
+      .limit(50);
+
+    const { data: goals } = await supabase
+      .from('goals')
+      .select('*')
+      .eq('user_id', user.id)
+      .eq('status', 'active');
+
+    // Calculate totals
+    const totalIncome = transactions?.filter(t => t.type === 'income').reduce((sum, t) => sum + parseFloat(t.amount.toString()), 0) || 0;
+    const totalExpense = transactions?.filter(t => t.type === 'expense').reduce((sum, t) => sum + parseFloat(t.amount.toString()), 0) || 0;
+    const balance = totalIncome - totalExpense;
+
+    // Category breakdown
+    const categorySpending = transactions?.filter(t => t.type === 'expense').reduce((acc, t) => {
+      const cat = t.categories?.name || 'Other';
+      acc[cat] = (acc[cat] || 0) + parseFloat(t.amount.toString());
+      return acc;
+    }, {} as Record<string, number>);
 
     // Fetch recent chat history
     const { data: chatHistory } = await supabase
@@ -57,12 +81,30 @@ serve(async (req) => {
     const messages = [
       {
         role: 'system',
-        content: `You are Xpensify Assistant, a helpful AI financial companion. 
-        You help users understand their spending, answer questions about their finances, 
-        and provide guidance on budgeting and saving. Be friendly, concise, and actionable.
-        
-        User's recent transactions:
-        ${JSON.stringify(transactions, null, 2)}`
+        content: `You are Xpensify Assistant, a specialized AI financial advisor and companion.
+
+CAPABILITIES:
+- Analyze spending patterns and provide insights
+- Answer questions about budgets, savings, and financial concepts
+- Give personalized recommendations based on user data
+- Explain financial terms in simple language
+- Help track progress toward goals
+
+USER'S FINANCIAL DATA:
+Profile: ${JSON.stringify(profile, null, 2)}
+Current Balance: ₹${balance.toLocaleString()}
+Total Income: ₹${totalIncome.toLocaleString()}
+Total Expenses: ₹${totalExpense.toLocaleString()}
+Category Spending: ${JSON.stringify(categorySpending, null, 2)}
+Active Goals: ${JSON.stringify(goals, null, 2)}
+Recent Transactions (last 50): ${JSON.stringify(transactions?.slice(0, 10), null, 2)}
+
+INSTRUCTIONS:
+- Be friendly, concise, and actionable
+- Use real data from the user's finances in your responses
+- Format monetary amounts with ₹ symbol and commas
+- Provide specific, personalized advice
+- Keep responses under 150 words unless asked for details`
       },
       ...(chatHistory || []).map(msg => ({
         role: msg.role,

@@ -3,11 +3,12 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
-import { Plus, TrendingUp, TrendingDown, LogOut, Wallet, BarChart3, Target, GraduationCap } from "lucide-react";
+import { Plus, TrendingUp, TrendingDown, LogOut, Wallet, BarChart3, Target, GraduationCap, Sparkles } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import AddTransactionDialog from "@/components/AddTransactionDialog";
 import TransactionsList from "@/components/TransactionsList";
 import Chatbot from "@/components/Chatbot";
+import NotificationCenter from "@/components/NotificationCenter";
 import { Session } from "@supabase/supabase-js";
 
 const Dashboard = () => {
@@ -101,14 +102,17 @@ const Dashboard = () => {
         {/* Header */}
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold">Dashboard</h1>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleSignOut}
-            className="rounded-full"
-          >
-            <LogOut className="h-5 w-5" />
-          </Button>
+          <div className="flex items-center gap-2">
+            <NotificationCenter />
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleSignOut}
+              className="rounded-full"
+            >
+              <LogOut className="h-5 w-5" />
+            </Button>
+          </div>
         </div>
 
         {/* Stats Cards */}
@@ -168,23 +172,58 @@ const Dashboard = () => {
 
         {/* Quick Actions */}
         <div className="grid grid-cols-2 gap-3 mb-6">
-          <Button onClick={() => setShowAddDialog(true)} className="gradient-primary rounded-2xl py-6">
-            <Plus className="mr-2 h-5 w-5" />
-            Add Transaction
-          </Button>
-          <Button onClick={() => navigate("/analytics")} variant="outline" className="rounded-2xl py-6">
-            <BarChart3 className="mr-2 h-5 w-5" />
-            Analytics
-          </Button>
-          <Button onClick={() => navigate("/goals")} variant="outline" className="rounded-2xl py-6">
-            <Target className="mr-2 h-5 w-5" />
-            Goals
-          </Button>
-          <Button onClick={() => navigate("/coach")} variant="outline" className="rounded-2xl py-6">
-            <GraduationCap className="mr-2 h-5 w-5" />
-            Learn
-          </Button>
+          <Card
+            className="glass border-none cursor-pointer hover:scale-105 transition-transform"
+            onClick={() => navigate("/smart-entry")}
+          >
+            <CardContent className="pt-6 text-center">
+              <Sparkles className="h-8 w-8 mx-auto mb-2 text-primary" />
+              <p className="font-semibold">Smart Entry</p>
+              <p className="text-xs text-muted-foreground mt-1">Upload Bills</p>
+            </CardContent>
+          </Card>
+
+          <Card
+            className="glass border-none cursor-pointer hover:scale-105 transition-transform"
+            onClick={() => navigate("/analytics")}
+          >
+            <CardContent className="pt-6 text-center">
+              <BarChart3 className="h-8 w-8 mx-auto mb-2 text-primary" />
+              <p className="font-semibold">Analytics</p>
+              <p className="text-xs text-muted-foreground mt-1">AI Insights</p>
+            </CardContent>
+          </Card>
+
+          <Card
+            className="glass border-none cursor-pointer hover:scale-105 transition-transform"
+            onClick={() => navigate("/goals")}
+          >
+            <CardContent className="pt-6 text-center">
+              <Target className="h-8 w-8 mx-auto mb-2 text-primary" />
+              <p className="font-semibold">Goals</p>
+              <p className="text-xs text-muted-foreground mt-1">Track Progress</p>
+            </CardContent>
+          </Card>
+
+          <Card
+            className="glass border-none cursor-pointer hover:scale-105 transition-transform"
+            onClick={() => navigate("/coach")}
+          >
+            <CardContent className="pt-6 text-center">
+              <GraduationCap className="h-8 w-8 mx-auto mb-2 text-primary" />
+              <p className="font-semibold">Learn</p>
+              <p className="text-xs text-muted-foreground mt-1">Earn XP</p>
+            </CardContent>
+          </Card>
         </div>
+
+        <Button
+          onClick={() => setShowAddDialog(true)}
+          className="w-full gradient-primary text-white hover:opacity-90 transition-opacity rounded-xl py-6 mb-6"
+        >
+          <Plus className="h-5 w-5 mr-2" />
+          Quick Add Transaction
+        </Button>
 
         {/* Transactions List */}
         <TransactionsList userId={session?.user?.id || ""} onUpdate={fetchStats} />

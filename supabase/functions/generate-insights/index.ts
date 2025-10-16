@@ -79,7 +79,7 @@ serve(async (req) => {
             User Profile:
             ${JSON.stringify(profile, null, 2)}
             
-            Provide insights in JSON array format:
+            Provide insights in JSON array format. Return ONLY the raw JSON array with no markdown formatting, no code blocks, no backticks, no additional text:
             [
               {
                 "title": "Brief title",
@@ -87,8 +87,7 @@ serve(async (req) => {
                 "type": "spending|saving|category|trend",
                 "severity": "info|warning|success"
               }
-            ]
-            Only return the JSON array, no additional text.`
+            ]`
           }
         ],
       }),
@@ -101,9 +100,12 @@ serve(async (req) => {
     }
 
     const data = await response.json();
-    const content = data.choices[0].message.content;
+    let content = data.choices[0].message.content;
     
     console.log('AI insights generated');
+    
+    // Remove markdown code fences if present
+    content = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
     
     const insights = JSON.parse(content);
 

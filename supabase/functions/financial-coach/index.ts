@@ -31,12 +31,29 @@ serve(async (req) => {
 
     const { topic, question } = await req.json();
 
-    // Fetch user profile for personalization
+    // Fetch user profile and spending data for personalization
     const { data: profile } = await supabase
       .from('profiles')
       .select('*')
       .eq('id', user.id)
       .single();
+
+    const { data: transactions } = await supabase
+      .from('transactions')
+      .select(`*, categories(name, icon)`)
+      .eq('user_id', user.id)
+      .order('date', { ascending: false })
+      .limit(30);
+
+    // Calculate spending patterns
+    const categorySpending: Record<string, number> = transactions?.filter(t => t.type === 'expense').reduce((acc, t) => {
+      const cat = t.categories?.name || 'Other';
+      acc[cat] = (acc[cat] || 0) + parseFloat(t.amount.toString());
+      return acc;
+    }, {} as Record<string, number>) || {};
+
+    const totalSpending: number = Object.values(categorySpending).reduce((sum, val) => sum + val, 0);
+    const topCategory: [string, number] | undefined = Object.entries(categorySpending).sort((a, b) => b[1] - a[1])[0];
 
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     if (!LOVABLE_API_KEY) {
@@ -66,13 +83,22 @@ serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: `You are a friendly financial literacy coach. Explain financial concepts in simple, 
+            content: `You are a friendly and personalized financial literacy coach. Explain financial concepts in simple, 
             relatable terms. Use examples, analogies, and actionable advice. Be encouraging and motivating.
+            Tailor your advice to the user's actual spending patterns when relevant.
             
-            User profile:
+            USER PROFILE:
             Income range: ${profile?.income_range || 'Not specified'}
             Savings goal: ${profile?.savings_goal || 'Not specified'}
-            Risk comfort: ${profile?.risk_comfort || 'Not specified'}`
+            Risk comfort: ${profile?.risk_comfort || 'Not specified'}
+            Current level: ${profile?.level || 1}
+            XP: ${profile?.xp || 0}
+            
+            SPENDING PATTERNS:
+            Total recent spending: ₹${totalSpending.toLocaleString()}
+            Top spending category: ${topCategory ? `${topCategory[0]} (₹${topCategory[1].toLocaleString()})` : 'N/A'}
+            
+            When discussing budgeting or saving, reference their actual spending patterns to make advice more relevant and actionable.`
           },
           {
             role: 'user',

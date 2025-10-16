@@ -37,10 +37,17 @@ const Analytics = () => {
         return;
       }
 
-      // Fetch transactions for charts
+      // Fetch transactions with categories
       const { data: transactions, error } = await supabase
         .from("transactions")
-        .select("*")
+        .select(`
+          *,
+          categories (
+            name,
+            icon,
+            color
+          )
+        `)
         .eq("user_id", user.id);
 
       if (error) throw error;
@@ -48,17 +55,19 @@ const Analytics = () => {
       // Process category data
       const categoryMap = new Map();
       transactions?.forEach((tx) => {
-        const cat = tx.description || "Other";
-        const amount = parseFloat(tx.amount.toString());
         if (tx.type === "expense") {
-          categoryMap.set(cat, (categoryMap.get(cat) || 0) + amount);
+          const catName = tx.categories?.name || "Other";
+          const catIcon = tx.categories?.icon || "📦";
+          const amount = parseFloat(tx.amount.toString());
+          
+          if (!categoryMap.has(catName)) {
+            categoryMap.set(catName, { name: `${catIcon} ${catName}`, value: 0 });
+          }
+          categoryMap.get(catName).value += amount;
         }
       });
 
-      const catData = Array.from(categoryMap.entries()).map(([name, value]) => ({
-        name,
-        value,
-      }));
+      const catData = Array.from(categoryMap.values());
       setCategoryData(catData);
 
       // Process monthly data

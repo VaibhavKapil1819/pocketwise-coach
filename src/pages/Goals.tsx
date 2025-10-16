@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
-import { ArrowLeft, Plus, Target, Trash2, TrendingUp, Wallet } from "lucide-react";
+import { ArrowLeft, Plus, Target, Trash2, TrendingUp, Wallet, Sparkles } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 interface Goal {
@@ -18,6 +18,7 @@ interface Goal {
   deadline: string;
   category: string;
   status: string;
+  prediction?: string;
 }
 
 const Goals = () => {
@@ -52,7 +53,30 @@ const Goals = () => {
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      setGoals(data || []);
+      
+      // Calculate predictions for each goal
+      const goalsWithPredictions = await Promise.all((data || []).map(async (goal) => {
+        const progress = (goal.current_amount / goal.target_amount) * 100;
+        const remaining = goal.target_amount - goal.current_amount;
+        
+        // Simple prediction based on average monthly savings
+        const { data: transactions } = await supabase
+          .from('transactions')
+          .select('amount, date')
+          .eq('user_id', user.id)
+          .eq('type', 'income')
+          .gte('date', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString());
+        
+        const avgMonthlySavings = transactions?.reduce((sum, t) => sum + parseFloat(t.amount.toString()), 0) || 0;
+        const monthsToGoal = avgMonthlySavings > 0 ? Math.ceil(remaining / avgMonthlySavings) : 0;
+        
+        return {
+          ...goal,
+          prediction: monthsToGoal > 0 ? `${monthsToGoal} month${monthsToGoal > 1 ? 's' : ''} at current rate` : 'Keep adding to reach your goal!'
+        };
+      }));
+      
+      setGoals(goalsWithPredictions);
     } catch (error: any) {
       toast({
         title: "Error",
@@ -229,6 +253,15 @@ const Goals = () => {
                         <div className="flex items-center gap-2 text-xs text-muted-foreground">
                           <TrendingUp className="h-3 w-3" />
                           <span>₹{(goal.target_amount - goal.current_amount).toLocaleString()} remaining</span>
+                        </div>
+                      )}
+
+                      {goal.prediction && progress < 100 && (
+                        <div className="mt-3 p-3 bg-primary/10 rounded-lg">
+                          <p className="text-xs font-medium text-primary flex items-center gap-2">
+                            <Sparkles className="h-3 w-3" />
+                            AI Prediction: {goal.prediction}
+                          </p>
                         </div>
                       )}
                       
