@@ -86,7 +86,19 @@ const TransactionsList = ({ userId, onUpdate, limit = 5 }: TransactionsListProps
 
   return (
     <div className="space-y-3">
-      <h2 className="text-xl font-semibold mb-4">Recent Transactions</h2>
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-xl font-semibold">Recent Transactions</h2>
+        {limit && transactions.length >= limit && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => navigate("/transactions")}
+            className="rounded-xl"
+          >
+            View All
+          </Button>
+        )}
+      </div>
       {transactions.map((transaction) => (
         <Card key={transaction.id} className="glass border-none">
           <CardContent className="p-4">

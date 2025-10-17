@@ -330,15 +330,17 @@ const AddTransactionDialog = ({ open, onOpenChange, userId, onSuccess }: AddTran
             </>
           )}
 
-          <Button
-            type="submit"
-            disabled={loading}
-            className={`w-full ${
-              type === "income" ? "gradient-success" : "gradient-expense"
-            } text-white hover:opacity-90 transition-opacity rounded-xl py-6`}
-          >
-            {loading ? "Adding..." : `Add ${type === "income" ? "Income" : "Expense"}`}
-          </Button>
+          <div className="sticky bottom-0 pt-4 bg-background">
+            <Button
+              type="submit"
+              disabled={loading}
+              className={`w-full ${
+                type === "income" ? "gradient-success" : "gradient-expense"
+              } text-white hover:opacity-90 transition-opacity rounded-xl py-6`}
+            >
+              {loading ? "Adding..." : `Add ${type === "income" ? "Income" : "Expense"}`}
+            </Button>
+          </div>
         </form>
       </DialogContent>
     </Dialog>
