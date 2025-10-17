@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
-import { ArrowLeft, Plus, Target, Trash2, TrendingUp, Wallet, Sparkles } from "lucide-react";
+import { ArrowLeft, Plus, Target, Trash2, TrendingUp, Wallet, Sparkles, PiggyBank } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 interface Goal {
@@ -24,6 +24,9 @@ interface Goal {
 const Goals = () => {
   const [goals, setGoals] = useState<Goal[]>([]);
   const [showAddDialog, setShowAddDialog] = useState(false);
+  const [showContributeDialog, setShowContributeDialog] = useState(false);
+  const [selectedGoal, setSelectedGoal] = useState<Goal | null>(null);
+  const [contributionAmount, setContributionAmount] = useState("");
   const [formData, setFormData] = useState({
     title: "",
     target_amount: "",
@@ -142,6 +145,36 @@ const Goals = () => {
     }
   };
 
+  const handleContribute = async () => {
+    if (!selectedGoal || !contributionAmount) return;
+    
+    try {
+      const newAmount = selectedGoal.current_amount + parseFloat(contributionAmount);
+      const { error } = await supabase
+        .from("goals")
+        .update({ current_amount: newAmount })
+        .eq("id", selectedGoal.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: `Added ₹${parseFloat(contributionAmount).toLocaleString()} to ${selectedGoal.title}`,
+      });
+
+      setShowContributeDialog(false);
+      setContributionAmount("");
+      setSelectedGoal(null);
+      fetchGoals();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-secondary/20 to-accent/10">
       <div className="container mx-auto px-4 py-6 max-w-4xl">
@@ -201,6 +234,42 @@ const Goals = () => {
             </DialogContent>
           </Dialog>
         </div>
+
+        {/* Contribute Dialog */}
+        <Dialog open={showContributeDialog} onOpenChange={setShowContributeDialog}>
+          <DialogContent className="glass border-none">
+            <DialogHeader>
+              <DialogTitle>Add Money to Goal</DialogTitle>
+            </DialogHeader>
+            {selectedGoal && (
+              <div className="space-y-4">
+                <div>
+                  <p className="text-sm text-muted-foreground mb-2">Goal: {selectedGoal.title}</p>
+                  <p className="text-lg font-semibold">
+                    Current: ₹{selectedGoal.current_amount.toLocaleString()} / ₹{selectedGoal.target_amount.toLocaleString()}
+                  </p>
+                </div>
+                <div>
+                  <Label>Contribution Amount (₹)</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={contributionAmount}
+                    onChange={(e) => setContributionAmount(e.target.value)}
+                    placeholder="Enter amount"
+                  />
+                </div>
+                <Button 
+                  onClick={handleContribute} 
+                  className="w-full gradient-primary"
+                  disabled={!contributionAmount || parseFloat(contributionAmount) <= 0}
+                >
+                  Add ₹{contributionAmount ? parseFloat(contributionAmount).toLocaleString() : 0}
+                </Button>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
 
         {goals.length === 0 ? (
           <Card className="glass border-none">
@@ -269,6 +338,21 @@ const Goals = () => {
                         <div className="text-xs text-success font-semibold flex items-center gap-1">
                           🎉 Goal achieved!
                         </div>
+                      )}
+
+                      {progress < 100 && (
+                        <Button
+                          onClick={() => {
+                            setSelectedGoal(goal);
+                            setShowContributeDialog(true);
+                          }}
+                          variant="outline"
+                          size="sm"
+                          className="w-full mt-3 rounded-xl"
+                        >
+                          <PiggyBank className="h-4 w-4 mr-2" />
+                          Add Money to Goal
+                        </Button>
                       )}
                     </div>
                   </CardContent>

@@ -33,6 +33,7 @@ const AddTransactionDialog = ({ open, onOpenChange, userId, onSuccess }: AddTran
   const [categories, setCategories] = useState<any[]>([]);
   const [goals, setGoals] = useState<Goal[]>([]);
   const [selectedGoalId, setSelectedGoalId] = useState<string>("");
+  const [contributionAmount, setContributionAmount] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
   const { toast } = useToast();
@@ -158,7 +159,10 @@ const AddTransactionDialog = ({ open, onOpenChange, userId, onSuccess }: AddTran
       if (type === "income" && selectedGoalId && selectedGoalId !== "none") {
         const selectedGoal = goals.find(g => g.id === selectedGoalId);
         if (selectedGoal) {
-          const newAmount = selectedGoal.current_amount + parseFloat(amount);
+          const amountToAdd = contributionAmount 
+            ? parseFloat(contributionAmount) 
+            : parseFloat(amount);
+          const newAmount = selectedGoal.current_amount + amountToAdd;
           await supabase
             .from("goals")
             .update({ current_amount: newAmount })
@@ -175,6 +179,7 @@ const AddTransactionDialog = ({ open, onOpenChange, userId, onSuccess }: AddTran
       setAmount("");
       setDescription("");
       setSelectedGoalId("");
+      setContributionAmount("");
       setDate(new Date().toISOString().split("T")[0]);
       onSuccess();
       onOpenChange(false);
@@ -287,22 +292,42 @@ const AddTransactionDialog = ({ open, onOpenChange, userId, onSuccess }: AddTran
           </div>
 
           {type === "income" && goals.length > 0 && (
-            <div className="space-y-2">
-              <Label htmlFor="goal">Link to Goal (Optional)</Label>
-              <Select value={selectedGoalId} onValueChange={setSelectedGoalId}>
-                <SelectTrigger className="rounded-xl">
-                  <SelectValue placeholder="Select a goal to contribute to" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">None</SelectItem>
-                  {goals.map((goal) => (
-                    <SelectItem key={goal.id} value={goal.id}>
-                      🎯 {goal.title} (₹{goal.current_amount.toLocaleString()}/₹{goal.target_amount.toLocaleString()})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            <>
+              <div className="space-y-2">
+                <Label htmlFor="goal">Link to Goal (Optional)</Label>
+                <Select value={selectedGoalId} onValueChange={setSelectedGoalId}>
+                  <SelectTrigger className="rounded-xl">
+                    <SelectValue placeholder="Select a goal to contribute to" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">None</SelectItem>
+                    {goals.map((goal) => (
+                      <SelectItem key={goal.id} value={goal.id}>
+                        🎯 {goal.title} (₹{goal.current_amount.toLocaleString()}/₹{goal.target_amount.toLocaleString()})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              {selectedGoalId && selectedGoalId !== "none" && (
+                <div className="space-y-2">
+                  <Label htmlFor="contributionAmount">Contribution Amount (Optional - defaults to full income)</Label>
+                  <Input
+                    id="contributionAmount"
+                    type="number"
+                    step="0.01"
+                    value={contributionAmount}
+                    onChange={(e) => setContributionAmount(e.target.value)}
+                    placeholder={`Full amount: ₹${amount || 0}`}
+                    className="rounded-xl"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Leave empty to contribute the entire income amount
+                  </p>
+                </div>
+              )}
+            </>
           )}
 
           <Button

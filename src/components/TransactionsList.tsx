@@ -1,17 +1,20 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
-import { Trash2 } from "lucide-react";
+import { Trash2, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
+import { useNavigate } from "react-router-dom";
 
 interface TransactionsListProps {
   userId: string;
   onUpdate: () => void;
+  limit?: number;
 }
 
-const TransactionsList = ({ userId, onUpdate }: TransactionsListProps) => {
+const TransactionsList = ({ userId, onUpdate, limit = 5 }: TransactionsListProps) => {
+  const navigate = useNavigate();
   const [transactions, setTransactions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
@@ -30,7 +33,7 @@ const TransactionsList = ({ userId, onUpdate }: TransactionsListProps) => {
         `)
         .eq("user_id", userId)
         .order("date", { ascending: false })
-        .limit(20);
+        .limit(limit);
 
       if (error) throw error;
       setTransactions(data || []);
@@ -104,7 +107,7 @@ const TransactionsList = ({ userId, onUpdate }: TransactionsListProps) => {
                   </p>
                 </div>
               </div>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
                 <p
                   className={`text-xl font-bold ${
                     transaction.type === "income" ? "text-success" : "text-expense"
@@ -116,10 +119,10 @@ const TransactionsList = ({ userId, onUpdate }: TransactionsListProps) => {
                 <Button
                   variant="ghost"
                   size="icon"
-                  onClick={() => handleDelete(transaction.id)}
+                  onClick={() => navigate(`/transaction/${transaction.id}`)}
                   className="rounded-full h-8 w-8"
                 >
-                  <Trash2 className="h-4 w-4 text-destructive" />
+                  <Eye className="h-4 w-4" />
                 </Button>
               </div>
             </div>
