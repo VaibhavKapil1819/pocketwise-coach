@@ -12,6 +12,7 @@ import Goals from "./pages/Goals";
 import Coach from "./pages/Coach";
 import CoachNew from "./pages/CoachNew";
 import TransactionDetail from "./pages/TransactionDetail";
+import Transactions from "./pages/Transactions";
 import SmartEntry from "./pages/SmartEntry";
 import NotFound from "./pages/NotFound";
 
@@ -32,6 +33,7 @@ const App = () => (
           <Route path="/goals" element={<Goals />} />
           <Route path="/coach" element={<CoachNew />} />
           <Route path="/transaction/:id" element={<TransactionDetail />} />
+          <Route path="/transactions" element={<Transactions />} />
           <Route path="/smart-entry" element={<SmartEntry />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
