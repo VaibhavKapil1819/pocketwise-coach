@@ -39,16 +39,7 @@ serve(async (req) => {
             content: [
               {
                 type: 'text',
-                text: `Analyze this receipt/bill image and extract the following information in JSON format:
-                {
-                  "merchant": "store/vendor name",
-                  "amount": "total amount as number",
-                  "date": "date in YYYY-MM-DD format",
-                  "category": "one of: Food & Dining, Shopping, Transportation, Entertainment, Bills & Utilities, Healthcare, Education, Other",
-                  "description": "brief description of the transaction",
-                  "items": ["list of items if visible"]
-                }
-                Only return the JSON object, no additional text.`
+                text: 'Analyze this receipt/bill image and extract the transaction details.'
               },
               {
                 type: 'image_url',
@@ -59,6 +50,49 @@ serve(async (req) => {
             ]
           }
         ],
+        tools: [
+          {
+            type: 'function',
+            function: {
+              name: 'extract_receipt_data',
+              description: 'Extract transaction data from a receipt or bill image',
+              parameters: {
+                type: 'object',
+                properties: {
+                  merchant: {
+                    type: 'string',
+                    description: 'Store or vendor name'
+                  },
+                  amount: {
+                    type: 'number',
+                    description: 'Total amount'
+                  },
+                  date: {
+                    type: 'string',
+                    description: 'Date in YYYY-MM-DD format'
+                  },
+                  category: {
+                    type: 'string',
+                    enum: ['Food & Dining', 'Shopping', 'Transportation', 'Entertainment', 'Bills & Utilities', 'Healthcare', 'Education', 'Other'],
+                    description: 'Transaction category'
+                  },
+                  description: {
+                    type: 'string',
+                    description: 'Brief description of the transaction'
+                  },
+                  items: {
+                    type: 'array',
+                    items: { type: 'string' },
+                    description: 'List of items if visible'
+                  }
+                },
+                required: ['merchant', 'amount', 'date', 'category', 'description'],
+                additionalProperties: false
+              }
+            }
+          }
+        ],
+        tool_choice: { type: 'function', function: { name: 'extract_receipt_data' } }
       }),
     });
 
@@ -69,12 +103,16 @@ serve(async (req) => {
     }
 
     const data = await response.json();
-    const content = data.choices[0].message.content;
+    const toolCall = data.choices[0].message.tool_calls?.[0];
     
-    console.log('AI response:', content);
+    if (!toolCall || !toolCall.function.arguments) {
+      throw new Error('No structured data returned from AI');
+    }
     
-    // Parse the JSON response
-    const extractedData = JSON.parse(content);
+    console.log('AI response:', toolCall.function.arguments);
+    
+    // Parse the structured JSON response from tool call
+    const extractedData = JSON.parse(toolCall.function.arguments);
 
     return new Response(
       JSON.stringify({ success: true, data: extractedData }),
