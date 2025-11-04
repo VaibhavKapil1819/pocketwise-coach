@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, TrendingUp, Lightbulb, Target, Trophy, Crown, Wallet, PiggyBank, LineChart, Briefcase } from "lucide-react";
 import { motion } from "framer-motion";
 import FinancialTipCard from "@/components/FinancialTipCard";
+import BottomNav from "@/components/BottomNav";
 
 interface LevelData {
   level: number;
@@ -286,7 +287,7 @@ const CoachNew = () => {
   }, {} as Record<string, TipData[]>);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-secondary/20 to-accent/10">
+    <div className="min-h-screen bg-gradient-to-br from-background via-secondary/20 to-accent/10 pb-24">
       <div className="container mx-auto px-4 py-6 max-w-6xl">
         {/* Header */}
         <div className="flex items-center gap-4 mb-6">
@@ -436,6 +437,8 @@ const CoachNew = () => {
           )}
         </div>
       </div>
+
+      <BottomNav />
     </div>
   );
 };
