@@ -31,7 +31,7 @@ const Chatbot = () => {
       setMessages([
         {
           role: "assistant",
-          content: "Hi! I'm your Xpensify assistant. How can I help you manage your finances today?",
+          content: "Hi! I'm your AI Financial Mentor. I'm here to help you crush your goals and build wealth. What would you like to know?",
         },
       ]);
     }
@@ -84,7 +84,7 @@ const Chatbot = () => {
       <div className="flex items-center justify-between p-4 border-b border-border/50">
         <div className="flex items-center gap-2">
           <MessageCircle className="h-5 w-5 text-primary" />
-          <h3 className="font-semibold">Xpensify Assistant</h3>
+          <h3 className="font-semibold">AI Financial Mentor</h3>
         </div>
         <Button
           variant="ghost"

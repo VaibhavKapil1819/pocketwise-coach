@@ -198,7 +198,7 @@ const AddTransactionDialog = ({ open, onOpenChange, userId, onSuccess }: AddTran
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="glass sm:max-w-md rounded-3xl">
         <DialogHeader>
-          <DialogTitle className="text-2xl">Add Transaction</DialogTitle>
+          <DialogTitle className="text-2xl">Add to Goals</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -214,7 +214,10 @@ const AddTransactionDialog = ({ open, onOpenChange, userId, onSuccess }: AddTran
           </Tabs>
 
           <div className="space-y-2">
-            <Label>Upload Receipt (Optional)</Label>
+            <Label>Upload Receipt or Income Proof (Optional)</Label>
+            <p className="text-xs text-muted-foreground mb-2">
+              Upload payslip, invoice, or bank SMS to grow your goals
+            </p>
             <div className="relative">
               <Input
                 type="file"

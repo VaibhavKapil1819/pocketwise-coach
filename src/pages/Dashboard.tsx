@@ -1,86 +1,104 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
-import { Plus, TrendingUp, TrendingDown, LogOut, Wallet, BarChart3, Target, GraduationCap, Sparkles } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
+import { 
+  Target, 
+  BookOpen, 
+  Camera, 
+  LogOut, 
+  PlusCircle,
+  Settings,
+  Loader2,
+  Sparkles,
+  TrendingUp
+} from "lucide-react";
 import AddTransactionDialog from "@/components/AddTransactionDialog";
-import TransactionsList from "@/components/TransactionsList";
 import Chatbot from "@/components/Chatbot";
 import NotificationCenter from "@/components/NotificationCenter";
-import { Session } from "@supabase/supabase-js";
+import { Progress } from "@/components/ui/progress";
 
 const Dashboard = () => {
-  const [session, setSession] = useState<Session | null>(null);
+  const [session, setSession] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [showAddDialog, setShowAddDialog] = useState(false);
-  const [stats, setStats] = useState({
-    totalIncome: 0,
-    totalExpense: 0,
-    balance: 0,
-  });
-  const { toast } = useToast();
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [goals, setGoals] = useState<any[]>([]);
+  const [topGoal, setTopGoal] = useState<any>(null);
+  const [dailyTip, setDailyTip] = useState("");
+  const [profile, setProfile] = useState<any>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
+      setLoading(false);
       if (!session) {
         navigate("/auth");
+      } else {
+        fetchGoals(session.user.id);
+        fetchProfile(session.user.id);
+        generateDailyTip();
       }
-      setLoading(false);
     });
 
-    // Listen for auth changes
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
       if (!session) {
-        navigate("/auth");
+        navigate("/");
       }
     });
 
     return () => subscription.unsubscribe();
   }, [navigate]);
 
-  useEffect(() => {
-    if (session?.user) {
-      fetchStats();
-    }
-  }, [session]);
-
-  const fetchStats = async () => {
+  const fetchGoals = async (userId: string) => {
     try {
-      const { data: transactions, error } = await supabase
-        .from("transactions")
-        .select("type, amount")
-        .eq("user_id", session?.user?.id);
+      const { data, error } = await supabase
+        .from("goals")
+        .select("*")
+        .eq("user_id", userId)
+        .eq("status", "active")
+        .order("created_at", { ascending: false });
 
       if (error) throw error;
 
-      const income = transactions
-        ?.filter((t) => t.type === "income")
-        .reduce((sum, t) => sum + parseFloat(t.amount.toString()), 0) || 0;
-
-      const expense = transactions
-        ?.filter((t) => t.type === "expense")
-        .reduce((sum, t) => sum + parseFloat(t.amount.toString()), 0) || 0;
-
-      setStats({
-        totalIncome: income,
-        totalExpense: expense,
-        balance: income - expense,
-      });
+      setGoals(data || []);
+      if (data && data.length > 0) {
+        setTopGoal(data[0]);
+      }
     } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
+      console.error("Error fetching goals:", error.message);
     }
+  };
+
+  const fetchProfile = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", userId)
+        .single();
+
+      if (error) throw error;
+      setProfile(data);
+    } catch (error: any) {
+      console.error("Error fetching profile:", error.message);
+    }
+  };
+
+  const generateDailyTip = () => {
+    const tips = [
+      "💡 Small daily saves compound into big wins",
+      "🎯 Focus on one goal at a time for faster progress",
+      "📊 Track progress weekly to stay motivated",
+      "💪 Every rupee towards your goal counts",
+      "🌟 Celebrate small milestones along the way",
+      "🚀 Consistency beats intensity every time"
+    ];
+    setDailyTip(tips[Math.floor(Math.random() * tips.length)]);
   };
 
   const handleSignOut = async () => {
@@ -88,10 +106,16 @@ const Dashboard = () => {
     navigate("/");
   };
 
+  const handleGoalRefresh = () => {
+    if (session?.user?.id) {
+      fetchGoals(session.user.id);
+    }
+  };
+
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">Loading...</div>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-secondary/20 to-accent/10">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }
@@ -100,10 +124,22 @@ const Dashboard = () => {
     <div className="min-h-screen bg-gradient-to-br from-background via-secondary/20 to-accent/10">
       <div className="container mx-auto px-4 py-6 max-w-4xl">
         {/* Header */}
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold">Dashboard</h1>
-          <div className="flex items-center gap-2">
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h1 className="text-3xl font-bold">Your Financial Journey</h1>
+            <p className="text-muted-foreground">Hi {profile?.full_name || session?.user?.email?.split("@")[0]}! 👋</p>
+          </div>
+          <div className="flex gap-2">
             <NotificationCenter />
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => navigate("/money-flow")}
+              className="rounded-full"
+              title="Money Flow Engine"
+            >
+              <Settings className="h-5 w-5" />
+            </Button>
             <Button
               variant="ghost"
               size="icon"
@@ -115,125 +151,129 @@ const Dashboard = () => {
           </div>
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          <Card className="glass border-none">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Total Balance
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-3xl font-bold">₹{stats.balance.toLocaleString()}</p>
-                </div>
-                <Wallet className="h-8 w-8 text-primary" />
-              </div>
-            </CardContent>
-          </Card>
+        {/* Daily Mentor Tip */}
+        <Card className="glass border-none mb-6 gradient-primary">
+          <CardContent className="p-6">
+            <div className="flex items-center gap-3 text-white">
+              <Sparkles className="h-6 w-6" />
+              <p className="text-lg font-medium">{dailyTip}</p>
+            </div>
+          </CardContent>
+        </Card>
 
-          <Card className="glass border-none">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Total Income
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-3xl font-bold text-success">
-                    ₹{stats.totalIncome.toLocaleString()}
-                  </p>
+        {/* Hero Goal */}
+        {topGoal && (
+          <Card className="glass border-none mb-6">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <Target className="h-5 w-5 text-primary" />
+                  <h2 className="text-xl font-bold">Top Priority Goal</h2>
                 </div>
-                <TrendingUp className="h-8 w-8 text-success" />
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => navigate("/goals")}
+                  className="rounded-full"
+                >
+                  View All
+                </Button>
+              </div>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-2xl font-bold">{topGoal.title}</h3>
+                  <span className="text-lg font-semibold text-primary">
+                    {Math.round((topGoal.current_amount / topGoal.target_amount) * 100)}%
+                  </span>
+                </div>
+                <Progress 
+                  value={(topGoal.current_amount / topGoal.target_amount) * 100} 
+                  className="h-3"
+                />
+                <div className="flex justify-between text-sm text-muted-foreground">
+                  <span>₹{topGoal.current_amount.toLocaleString()} saved</span>
+                  <span>Goal: ₹{topGoal.target_amount.toLocaleString()}</span>
+                </div>
+                {topGoal.deadline && (
+                  <div className="flex items-center gap-2 text-sm">
+                    <TrendingUp className="h-4 w-4 text-green-500" />
+                    <span className="text-muted-foreground">
+                      On track to reach by {new Date(topGoal.deadline).toLocaleDateString()}
+                    </span>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
+        )}
 
-          <Card className="glass border-none">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Total Expenses
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-3xl font-bold text-expense">
-                    ₹{stats.totalExpense.toLocaleString()}
-                  </p>
-                </div>
-                <TrendingDown className="h-8 w-8 text-expense" />
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+        {/* Active Goals Grid */}
+        {goals.length > 1 && (
+          <div className="mb-6">
+            <h2 className="text-xl font-semibold mb-4">Other Active Goals</h2>
+            <div className="grid grid-cols-2 gap-4">
+              {goals.slice(1, 5).map((goal) => (
+                <Card
+                  key={goal.id}
+                  className="glass border-none cursor-pointer hover:scale-105 transition-all"
+                  onClick={() => navigate("/goals")}
+                >
+                  <CardContent className="p-4">
+                    <h3 className="font-semibold mb-2">{goal.title}</h3>
+                    <Progress 
+                      value={(goal.current_amount / goal.target_amount) * 100} 
+                      className="h-2 mb-2"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      ₹{goal.current_amount.toLocaleString()} / ₹{goal.target_amount.toLocaleString()}
+                    </p>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Quick Actions */}
-        <div className="grid grid-cols-2 gap-3 mb-6">
+        <div className="grid grid-cols-2 gap-4 mb-8">
           <Card
-            className="glass border-none cursor-pointer hover:scale-105 transition-transform"
+            className="glass cursor-pointer hover:scale-105 transition-all duration-300 border-none"
             onClick={() => navigate("/smart-entry")}
           >
-            <CardContent className="pt-6 text-center">
-              <Sparkles className="h-8 w-8 mx-auto mb-2 text-primary" />
-              <p className="font-semibold">Smart Entry</p>
-              <p className="text-xs text-muted-foreground mt-1">Upload Bills</p>
+            <CardContent className="p-6">
+              <Camera className="h-8 w-8 text-primary mb-3" />
+              <h3 className="font-semibold text-lg mb-1">Add to Goals</h3>
+              <p className="text-sm text-muted-foreground">Upload income or receipts</p>
             </CardContent>
           </Card>
 
           <Card
-            className="glass border-none cursor-pointer hover:scale-105 transition-transform"
-            onClick={() => navigate("/analytics")}
-          >
-            <CardContent className="pt-6 text-center">
-              <BarChart3 className="h-8 w-8 mx-auto mb-2 text-primary" />
-              <p className="font-semibold">Analytics</p>
-              <p className="text-xs text-muted-foreground mt-1">AI Insights</p>
-            </CardContent>
-          </Card>
-
-          <Card
-            className="glass border-none cursor-pointer hover:scale-105 transition-transform"
-            onClick={() => navigate("/goals")}
-          >
-            <CardContent className="pt-6 text-center">
-              <Target className="h-8 w-8 mx-auto mb-2 text-primary" />
-              <p className="font-semibold">Goals</p>
-              <p className="text-xs text-muted-foreground mt-1">Track Progress</p>
-            </CardContent>
-          </Card>
-
-          <Card
-            className="glass border-none cursor-pointer hover:scale-105 transition-transform"
+            className="glass cursor-pointer hover:scale-105 transition-all duration-300 border-none"
             onClick={() => navigate("/coach")}
           >
-            <CardContent className="pt-6 text-center">
-              <GraduationCap className="h-8 w-8 mx-auto mb-2 text-primary" />
-              <p className="font-semibold">Learn</p>
-              <p className="text-xs text-muted-foreground mt-1">Earn XP</p>
+            <CardContent className="p-6">
+              <BookOpen className="h-8 w-8 text-primary mb-3" />
+              <h3 className="font-semibold text-lg mb-1">AI Mentor</h3>
+              <p className="text-sm text-muted-foreground">Learn & grow</p>
             </CardContent>
           </Card>
         </div>
 
+        {/* Quick Add Button */}
         <Button
-          onClick={() => setShowAddDialog(true)}
-          className="w-full gradient-primary text-white hover:opacity-90 transition-opacity rounded-xl py-6 mb-6"
+          onClick={() => setDialogOpen(true)}
+          className="w-full gradient-primary text-white hover:opacity-90 transition-opacity rounded-2xl py-6 mb-6"
         >
-          <Plus className="h-5 w-5 mr-2" />
-          Quick Add Transaction
+          <PlusCircle className="mr-2 h-5 w-5" />
+          Add to Goals
         </Button>
-
-        {/* Transactions List */}
-        <TransactionsList userId={session?.user?.id || ""} onUpdate={fetchStats} />
 
         {/* Add Transaction Dialog */}
         <AddTransactionDialog
-          open={showAddDialog}
-          onOpenChange={setShowAddDialog}
-          userId={session?.user?.id || ""}
-          onSuccess={fetchStats}
+          open={dialogOpen}
+          onOpenChange={setDialogOpen}
+          userId={session?.user?.id}
+          onSuccess={handleGoalRefresh}
         />
 
         {/* Chatbot */}

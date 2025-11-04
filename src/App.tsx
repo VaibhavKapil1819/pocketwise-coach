@@ -14,6 +14,7 @@ import CoachNew from "./pages/CoachNew";
 import TransactionDetail from "./pages/TransactionDetail";
 import Transactions from "./pages/Transactions";
 import SmartEntry from "./pages/SmartEntry";
+import MoneyFlowEngine from "./pages/MoneyFlowEngine";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -35,6 +36,7 @@ const App = () => (
           <Route path="/transaction/:id" element={<TransactionDetail />} />
           <Route path="/transactions" element={<Transactions />} />
           <Route path="/smart-entry" element={<SmartEntry />} />
+          <Route path="/money-flow" element={<MoneyFlowEngine />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

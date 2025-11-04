@@ -21,6 +21,16 @@ const Onboarding = () => {
 
   const questions = [
     {
+      id: "savings_goal",
+      question: "What's your #1 money goal right now?",
+      options: [
+        "Emergency Fund",
+        "Buying Assets (Vehicle, Property)",
+        "Vacation/Travel",
+        "Starting Investments",
+      ],
+    },
+    {
       id: "income_range",
       question: "What's your monthly income range?",
       options: [
@@ -31,33 +41,23 @@ const Onboarding = () => {
       ],
     },
     {
-      id: "savings_goal",
-      question: "What's your primary savings goal?",
-      options: [
-        "Emergency Fund",
-        "Buying Assets (Vehicle, Property)",
-        "Vacation/Travel",
-        "Investments",
-      ],
-    },
-    {
       id: "spending_habits",
-      question: "How would you describe your spending habits?",
+      question: "How confident are you with managing money?",
       options: [
-        "Careful Planner",
-        "Moderate Spender",
-        "Spontaneous Buyer",
-        "Need Improvement",
+        "I'm great at it",
+        "Pretty good",
+        "Could be better",
+        "Need serious help",
       ],
     },
     {
       id: "risk_comfort",
       question: "Your comfort level with financial risks?",
       options: [
-        "Very Conservative",
-        "Somewhat Conservative",
-        "Moderate",
-        "Aggressive",
+        "Play it safe",
+        "Somewhat cautious",
+        "Balanced approach",
+        "Go for it",
       ],
     },
   ];
