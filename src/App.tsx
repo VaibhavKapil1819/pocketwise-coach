@@ -6,7 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Onboarding from "./pages/Onboarding";
-import Journey from "./pages/Journey";
+import Dashboard from "./pages/Dashboard";
 import Analytics from "./pages/Analytics";
 import Goals from "./pages/Goals";
 import Coach from "./pages/Coach";
@@ -15,7 +15,6 @@ import TransactionDetail from "./pages/TransactionDetail";
 import Transactions from "./pages/Transactions";
 import SmartEntry from "./pages/SmartEntry";
 import MoneyFlowEngine from "./pages/MoneyFlowEngine";
-import Plan from "./pages/Plan";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -30,11 +29,10 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/onboarding" element={<Onboarding />} />
-          <Route path="/dashboard" element={<Journey />} />
+          <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/analytics" element={<Analytics />} />
           <Route path="/goals" element={<Goals />} />
           <Route path="/coach" element={<CoachNew />} />
-          <Route path="/plan" element={<Plan />} />
           <Route path="/transaction/:id" element={<TransactionDetail />} />
           <Route path="/transactions" element={<Transactions />} />
           <Route path="/smart-entry" element={<SmartEntry />} />

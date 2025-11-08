@@ -4,10 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { ArrowLeft, Eye, Trash2, PlusCircle } from "lucide-react";
+import { ArrowLeft, Eye, Trash2 } from "lucide-react";
 import { format } from "date-fns";
-import AddTransactionDialog from "@/components/AddTransactionDialog";
-import BottomNav from "@/components/BottomNav";
 
 interface Transaction {
   id: string;
@@ -25,8 +23,6 @@ const MoneyFlowEngine = () => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({ income: 0, expense: 0, balance: 0 });
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [userId, setUserId] = useState<string | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -41,7 +37,6 @@ const MoneyFlowEngine = () => {
         navigate("/auth");
         return;
       }
-      setUserId(user.id);
 
       const { data: txData, error: txError } = await supabase
         .from("transactions")
@@ -107,7 +102,7 @@ const MoneyFlowEngine = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-secondary/20 to-accent/10 pb-24">
+    <div className="min-h-screen bg-gradient-to-br from-background via-secondary/20 to-accent/10">
       <div className="container mx-auto px-4 py-6 max-w-4xl">
         <div className="flex items-center gap-4 mb-6">
           <Button
@@ -192,26 +187,7 @@ const MoneyFlowEngine = () => {
             ))
           )}
         </div>
-
-        {/* Add Entry Button */}
-        <Button
-          onClick={() => setDialogOpen(true)}
-          className="fixed bottom-24 right-6 rounded-full h-14 w-14 shadow-lg gradient-primary text-white"
-          size="icon"
-        >
-          <PlusCircle className="h-6 w-6" />
-        </Button>
-
-        {/* Add Transaction Dialog */}
-        <AddTransactionDialog
-          open={dialogOpen}
-          onOpenChange={setDialogOpen}
-          userId={userId}
-          onSuccess={fetchData}
-        />
       </div>
-
-      <BottomNav />
     </div>
   );
 };
