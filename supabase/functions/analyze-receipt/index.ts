@@ -39,7 +39,7 @@ serve(async (req) => {
             content: [
               {
                 type: 'text',
-                text: 'Analyze this receipt/bill image and extract the transaction details.'
+                text: 'Analyze this image and extract ALL transactions. This could be a single receipt, bill, or a bank statement with multiple transactions. For bank statements, extract each transaction separately with its date, merchant/payee, amount, and type (income for credits/deposits, expense for debits/withdrawals).'
               },
               {
                 type: 'image_url',
@@ -54,45 +54,56 @@ serve(async (req) => {
           {
             type: 'function',
             function: {
-              name: 'extract_receipt_data',
-              description: 'Extract transaction data from a receipt or bill image',
+              name: 'extract_transactions',
+              description: 'Extract one or more transactions from a receipt, bill, or bank statement image',
               parameters: {
                 type: 'object',
                 properties: {
-                  merchant: {
-                    type: 'string',
-                    description: 'Store or vendor name'
-                  },
-                  amount: {
-                    type: 'number',
-                    description: 'Total amount'
-                  },
-                  date: {
-                    type: 'string',
-                    description: 'Date in YYYY-MM-DD format'
-                  },
-                  category: {
-                    type: 'string',
-                    enum: ['Food & Dining', 'Shopping', 'Transportation', 'Entertainment', 'Bills & Utilities', 'Healthcare', 'Education', 'Other'],
-                    description: 'Transaction category'
-                  },
-                  description: {
-                    type: 'string',
-                    description: 'Brief description of the transaction'
-                  },
-                  items: {
+                  transactions: {
                     type: 'array',
-                    items: { type: 'string' },
-                    description: 'List of items if visible'
+                    description: 'Array of transactions found in the image',
+                    items: {
+                      type: 'object',
+                      properties: {
+                        merchant: {
+                          type: 'string',
+                          description: 'Store, vendor, or payee name'
+                        },
+                        amount: {
+                          type: 'number',
+                          description: 'Transaction amount'
+                        },
+                        date: {
+                          type: 'string',
+                          description: 'Date in YYYY-MM-DD format'
+                        },
+                        category: {
+                          type: 'string',
+                          enum: ['Food & Dining', 'Shopping', 'Transportation', 'Entertainment', 'Bills & Utilities', 'Healthcare', 'Education', 'Other'],
+                          description: 'Transaction category'
+                        },
+                        description: {
+                          type: 'string',
+                          description: 'Brief description of the transaction'
+                        },
+                        type: {
+                          type: 'string',
+                          enum: ['income', 'expense'],
+                          description: 'Transaction type - income (credit/deposit) or expense (debit/withdrawal)'
+                        }
+                      },
+                      required: ['merchant', 'amount', 'date', 'category', 'description', 'type'],
+                      additionalProperties: false
+                    }
                   }
                 },
-                required: ['merchant', 'amount', 'date', 'category', 'description'],
+                required: ['transactions'],
                 additionalProperties: false
               }
             }
           }
         ],
-        tool_choice: { type: 'function', function: { name: 'extract_receipt_data' } }
+        tool_choice: { type: 'function', function: { name: 'extract_transactions' } }
       }),
     });
 
