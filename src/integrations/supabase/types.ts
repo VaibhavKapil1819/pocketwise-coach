@@ -161,10 +161,13 @@ export type Database = {
       profiles: {
         Row: {
           created_at: string | null
+          current_streak: number | null
           full_name: string | null
           id: string
           income_range: string | null
+          last_log_date: string | null
           level: number | null
+          longest_streak: number | null
           risk_comfort: string | null
           savings_goal: string | null
           spending_habits: string | null
@@ -173,10 +176,13 @@ export type Database = {
         }
         Insert: {
           created_at?: string | null
+          current_streak?: number | null
           full_name?: string | null
           id: string
           income_range?: string | null
+          last_log_date?: string | null
           level?: number | null
+          longest_streak?: number | null
           risk_comfort?: string | null
           savings_goal?: string | null
           spending_habits?: string | null
@@ -185,10 +191,13 @@ export type Database = {
         }
         Update: {
           created_at?: string | null
+          current_streak?: number | null
           full_name?: string | null
           id?: string
           income_range?: string | null
+          last_log_date?: string | null
           level?: number | null
+          longest_streak?: number | null
           risk_comfort?: string | null
           savings_goal?: string | null
           spending_habits?: string | null
