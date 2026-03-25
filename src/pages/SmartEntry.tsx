@@ -130,16 +130,12 @@ const SmartEntry = () => {
           >
             <ArrowLeft className="h-5 w-5" />
           </Button>
-          <div>
-            <h1 className="text-2xl font-bold">Add to Goals</h1>
-            <p className="text-sm text-muted-foreground">Upload income proof or receipts to grow your goals</p>
-          </div>
+          <h1 className="text-2xl font-bold">Smart Entry</h1>
         </div>
 
         <Card className="glass border-none">
           <CardHeader>
-            <CardTitle>Upload Payslip, Invoice, or Receipt</CardTitle>
-            <p className="text-sm text-muted-foreground">AI auto-detects income vs expenses and silently logs them</p>
+            <CardTitle>Upload Receipt or Bill</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex flex-col items-center justify-center py-12 border-2 border-dashed border-border/50 rounded-xl hover:border-primary/50 transition-colors">
